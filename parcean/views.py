@@ -7,7 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 
 from .models import Parcean
 from .serializers import ParceanSerializer, UserSerializer, TokenSerializer, LoginParceanSerializer
-
+from shops.models import Order
+from shops.serializers import OrderSerializer
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
@@ -27,12 +28,16 @@ def login(request):
         if serializer.is_valid():
             username = serializer.validated_data['username']
             password = serializer.validated_data['password']
-            user = User.objects.get(username=username)
-            if user.check_password(password):
-                token, created = Token.objects.get_or_create(user=user)
-                return Response({'token': token.key})
+            user_query = User.objects.filter(username=username)
+            if user_query.exists():
+                user  = user_query.first()
+                if user.check_password(password):
+                    token, created = Token.objects.get_or_create(user=user)
+                    return Response({'token': token.key})
+                else:
+                    return Response({'passwordIsNotCorrect':True}, status=status.HTTP_401_UNAUTHORIZED)
             else:
-                return Response(status=status.HTTP_401_UNAUTHORIZED)
+                return Response( {'message':"user is do not exits", "usernameIsDoesNotExists":True } ,status=status.HTTP_401_UNAUTHORIZED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
@@ -63,3 +68,20 @@ def createAccount(request):
             return Response(context, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def get_parcean_with_orders(request):
+    user = request.user
+    parcean = Parcean.objects.get(user=user)
+    orders = Order.objects.filter(parcean=parcean)
+    orders_dict = []
+    for order in orders:
+        orders_dict.append({
+            'item': order.item.name,
+            'parcean': order.parcean.name,
+            'quantity': order.quantity,
+            'total': order.total,
+            'id': order.id
+        })
+    return Response({'parcean': ParceanSerializer(parcean).data, 'orders': orders_dict})

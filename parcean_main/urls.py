@@ -26,8 +26,6 @@ class CustomAuthToken(ObtainAuthToken):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api-token-auth/', CustomAuthToken.as_view()),
-    path('api/', include('api.urls')),
-    path("frontend/", include("frontend.urls")),
     path('user/', include('users.urls')),
     path("students/", include("students.urls")),
     path("parcean/", include("parcean.urls")),

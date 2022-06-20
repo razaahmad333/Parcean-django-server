@@ -7,5 +7,7 @@ class Parcean(models.Model):
     username = models.CharField(max_length=200)
     password = models.CharField(max_length=200)
     user = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
+    wallet = models.IntegerField(default=0)
     def __str__(self):
         return self.name
+
